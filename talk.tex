@@ -1,0 +1,72 @@
+\documentclass[9pt]{beamer}
+\usepackage{minted}
+%\usemintedstyle{manni}
+\usemintedstyle{murphy}
+\usepackage{hyperref}
+\hypersetup{
+colorlinks=true,
+urlcolor=blue
+}
+\usepackage{graphicx}
+
+\begin{document}
+\title{h5py}
+\author{Nick Thompson} 
+\date{\today}
+
+\frame{\titlepage}
+
+\begin{frame}[fragile]
+\frametitle{Getting started:}
+\begin{minted}{bash}
+$ git clone https://github.com/NAThompson/h5py_talk.git
+$ pyvenv h5py_talk
+$ cd h5py_talk
+$ sudo ./install.sh  
+$ pip3 install -r requirements.txt
+$ . bin/activate
+\end{minted}
+\pause
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{What is the best scientific data format?}
+  Compressed CSV.
+\end{frame}
+
+
+\begin{frame}[fragile]
+  \frametitle{What is the second best scientific data format?}
+  HDF5.
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Ever had this conversation?}
+  \begin{itemize}
+  \item ``These ascii files are too large.''
+  \item ``We could use binary.''
+  \item ``How long will that take?''
+  \item ``4 hours.''
+  \item (3 years later . . .) ``WTF!!!''
+  \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Edict:}
+
+  Anyone who introduces a custom binary format shall be shot.
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Example:}
+
+  \begin{minted}{bash}
+    $ hdfview example_files/compound.h5
+  \end{minted}
+  \begin{figure}
+    \includegraphics[scale=0.3]{fig/hdfview.png}
+  \end{figure}
+\end{frame}
+
+
+\end{document}
