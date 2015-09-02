@@ -20,17 +20,15 @@ urlcolor=blue
 \frametitle{Getting started:}
 \begin{minted}{bash}
 $ git clone https://github.com/NAThompson/h5py_talk.git
-$ pyvenv h5py_talk
 $ cd h5py_talk
-$ sudo ./install.sh  
-$ pip3 install -r requirements.txt
-$ . bin/activate
+$ sudo /bin/bash
+# docker run -it -v `pwd`:/hdf5_talk /bin/bash
 \end{minted}
-\pause
 \end{frame}
 
 \begin{frame}[fragile]
   \frametitle{What is the best scientific data format?}
+  \pause
   Compressed CSV.
 \end{frame}
 
@@ -54,7 +52,7 @@ $ . bin/activate
 \begin{frame}[fragile]
   \frametitle{Edict:}
 
-  Anyone who introduces a custom binary format shall be shot.
+  Anyone who introduces a custom binary format shall be hanged.
 \end{frame}
 
 \begin{frame}[fragile]
@@ -66,6 +64,16 @@ $ . bin/activate
   \begin{figure}
     \includegraphics[scale=0.3]{fig/hdfview.png}
   \end{figure}
+  \pause
+  If you are attempting this in the Docker image, you'll need to set up X-window forwarding.
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Explore HDF5 Files}
+  \begin{minted}{bash}
+    $ h5ls example_files/compound.h5
+    $ h5dump example_files/compound.h5
+  \end{minted}
 \end{frame}
 
 
