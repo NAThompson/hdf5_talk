@@ -22,7 +22,7 @@ urlcolor=blue
 $ git clone https://github.com/NAThompson/h5py_talk.git
 $ cd h5py_talk
 $ sudo /bin/bash
-# docker run -it -v `pwd`:/hdf5_talk /bin/bash
+$ docker run -it -v `pwd`:/hdf5_talk /bin/bash
 \end{minted}
 \end{frame}
 
@@ -56,6 +56,14 @@ $ sudo /bin/bash
 \end{frame}
 
 \begin{frame}[fragile]
+  \frametitle{Where can I use my HDF5 files?}
+  \begin{itemize}
+  \item Fortran, C, C++, Java, Python, Octave, Matlab, IDL, LabView
+  \end{itemize}
+\end{frame}
+
+
+\begin{frame}[fragile]
   \frametitle{Example:}
 
   \begin{minted}{bash}
@@ -76,5 +84,84 @@ $ sudo /bin/bash
   \end{minted}
 \end{frame}
 
+\begin{frame}[fragile]
+  \frametitle{New Visualization Tool:}
+  \begin{minted}{bash}
+    $ git clone https://github.com/HDFGroup/hdf-compass.git
+    $ cd hdf-compass
+    $ python HDFCompass.py
+  \end{minted}
+\end{frame}
+
+
+\begin{frame}[fragile]
+\frametitle{First HDF5 File}
+\begin{minted}{python}
+>>> import h5py
+>>> import numpy as np
+>>> f = h5py.File('stock_prices.hdf5')
+v>>> f['/stock_prices/DJIA/MMM'] = np.random.random(2048)
+>>> f['/stock_prices/DJIA/MMM'].attrs['sample_rate'] = 1
+>>> f['/stock_prices/NASDAQ/MU'] = np.random.random(2048)
+>>> f['/stock_prices/NASDAQ/MU'].attrs['sample_rate'] = 1
+>>> f.close()
+\end{minted}
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Analyzing HDF5 file}
+  \begin{minted}{python}
+    >>> import h5py
+    >>> f = h5py.File('stock_prices.hdf5', 'r')
+    >>> [key for key in f.keys() ]
+    >>> ['stock_prices']
+    >>> list(f.keys())
+  \end{minted}
+  \pause
+  Use a callback to get more details:
+  \begin{minted}{python}
+    >>> def print_attrs(name, obj):
+    >>>     print(name)
+    >>>
+    >>> f.visititems(print_attrs)
+    >>>
+    >>> def p(name):
+    >>>     print(name)
+    >>>
+    >>> f.visit(p)
+  \end{minted}
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Standards Built on Top of HDF5}
+  Once you agree on a set of groups and attributes, you can create standards on top of HDF5:
+  \begin{itemize}
+  \item NetCDF (for climatology, meteorology, GIS)
+  \item PH5 (seismology)
+  \item 
+  \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Within-Dataset Compression}
+  Normally compressing data \emph{within} a file is unforgivable, but HDF5 makes it transparent:
+  \begin{minted}{bash}
+    >>> import h5py
+    >>> import numpy
+    >>> f = h5py.File('compressed.hdf5')
+    >>> zipped_dst = f.create_dataset('ones', shape=(4096,), dtype='int32', compression='gzip')
+    >>> zipped_dst = np.ones(4096)
+    >>> f.close()
+    >>> g = h5py.File('compressed.hdf5', 'r')
+    >>> dst = g['ones']
+    >>> a = dst[:]
+    >>> len(a)
+        4096
+  \end{minted}
+\end{frame}
+
+\begin{frame}
+  \frametitle{}
+\end{frame}
 
 \end{document}
