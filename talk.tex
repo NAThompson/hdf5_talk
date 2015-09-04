@@ -187,10 +187,67 @@ v>>> f['/stock_prices/DJIA/MMM'] = np.random.random(2048)
 
 \begin{frame}[fragile]
   \frametitle{Shuffle Filters}
-  We might get a better compression ratio if we move all the random bytes to one region:
-  
-    
+  We might get a better compression ratio if we move all the random bytes to one region on disk.
+
+  In numpy this is called ``shuffling'', and can be achieved via:
+  \begin{minted}{python}
+    >>> f.create_dataset('rands', shape=(len(a),), data=a, compression='gzip', shuffle=True)
+  \end{minted}
+  In my tests, gzip got a compression ratio of 3.86, and gzip+shuffle got a compression ratio of 5.79.    
 \end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Checksumming}
+  HDF5 has support for the Fletcher 32 checksum, which can be enabled via:
+  \begin{minted}{python}
+    >>> f.create_dataset('rands', shape=(len(a),), data=a, fletcher32=True)
+  \end{minted}
+  If we use hexedit to alter this file and load the data, we get:
+  \begin{minted}{python}
+    >>> f = h5py.File('fletcher_checked.hdf5')
+    >>> g = f['rands']
+    >>> g[...]
+    Traceback (most recent call last):
+    OSError: Can't read data (Data error detected by fletcher32 checksum)
+  \end{minted}
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{h5repack}
+  If you forgot to put checksumming, compression, or shuffling into your Python code during write, you can add it later with h5repack:
+  \begin{minted}{bash}
+    $ h5repack -v -f SHUF -f GZIP=9 -f FLET original.h5 copy.h5
+  \end{minted}
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{h5repack}
+  h5repack also ``defragments'' your hdf5 file:
+  \begin{minted}{python}
+    >>> f = h5py.File('repack.hdf5')
+    >>> a = np.random.rand(50000)
+    >>> b = np.random.rand(35000)
+    >>> c = np.random.rand(86000)
+    >>> d = np.random.rand(87434)
+    >>> f.create_dataset('a', shape=(len(a),), data=a)
+    >>> f.create_dataset('b', shape=(len(b),), data=b)
+    >>> f.create_dataset('c', shape=(len(c),), data=c)
+    >>> f.create_dataset('d', shape=(len(d),), data=d)
+    >>> f.flush()
+    >>> del f['c']
+    >>> f.flush()
+    >>> f.close()
+  \end{minted}
+  This creates a file with a ``hole'' in it; now repack:
+  \begin{minted}{bash}
+    $ h5repack repack.hdf5 packed.hdf5
+    ls -l repack.hdf5 packed.hdf5
+    -rw-r--r-- 1 root root 1381616 Sep  4 16:35 packed.hdf5
+    -rw-r--r-- 1 root root 2071664 Sep  4 16:34 repack.hdf5
+  \end{minted}
+  
+\end{frame}
+
 
 \begin{frame}[fragile]
   \frametitle{Fill-values}
