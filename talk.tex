@@ -156,12 +156,52 @@ v>>> f['/stock_prices/DJIA/MMM'] = np.random.random(2048)
     >>> dst = g['ones']
     >>> a = dst[:]
     >>> len(a)
-        4096
+    4096
+    >>> a
+    array([1, 1, 1, ..., 1, 1, 1], dtype=int32)
   \end{minted}
 \end{frame}
 
-\begin{frame}
-  \frametitle{}
+\begin{frame}[fragile]
+  \frametitle{Shuffle filters}
+  You can't compress random data, but you can compress random data that is stored in a datatype that is larger than the range of random values:
+  \begin{minted}{python}
+    >>> f = h5py.File('compress_random.hdf5')
+    >>> a = np.random.randint(low=0, high=256, size=10000)
+    >>> f.create_dataset('rands', shape=(len(a),), data=a)
+    >>> f.close()
+  \end{minted}
+  Now we can hexdump \texttt{compress\_random.hdf5} and see that all the entropy is in the first byte:
+  \begin{minted}{bash}
+    $ hexdump -v compress_random.hdf5
+    0000e80 004d 0000 0000 0000 00a8 0000 0000 0000
+    0000e90 00f5 0000 0000 0000 00d0 0000 0000 0000
+    0000ea0 007e 0000 0000 0000 00bd 0000 0000 0000
+    0000eb0 0075 0000 0000 0000 007b 0000 0000 0000
+    0000ec0 0026 0000 0000 0000 0021 0000 0000 0000
+    0000ed0 0027 0000 0000 0000 0048 0000 0000 0000
+    0000ee0 0043 0000 0000 0000 0009 0000 0000 0000
+    ...
+  \end{minted}
 \end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Shuffle Filters}
+  We might get a better compression ratio if we move all the random bytes to one region:
+  
+    
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Fill-values}
+  Arrays are filled with zeros by default, which is annoying:
+  \begin{minted}{bash}
+    >>> dset = f.create_dataset('waveform', shape=(2048,), dtype=np.float64, fillvalue=np.nan)
+    >>> dset[...]
+    array([ nan,  nan,  nan, ...,  nan,  nan,  nan])
+  \end{minted}
+\end{frame}
+
+
 
 \end{document}
