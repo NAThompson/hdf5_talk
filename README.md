@@ -13,6 +13,5 @@ To build the docker image:
 
 ```<bash>
 $ sudo /bin/bash
-# cd hdf5_talk3
 # docker build -t some_name .
 ```

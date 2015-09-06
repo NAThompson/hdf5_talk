@@ -138,7 +138,6 @@ v>>> f['/stock_prices/DJIA/MMM'] = np.random.random(2048)
   \begin{itemize}
   \item NetCDF (for climatology, meteorology, GIS)
   \item PH5 (seismology)
-  \item 
   \end{itemize}
 \end{frame}
 
@@ -149,7 +148,10 @@ v>>> f['/stock_prices/DJIA/MMM'] = np.random.random(2048)
     >>> import h5py
     >>> import numpy
     >>> f = h5py.File('compressed.hdf5')
-    >>> zipped_dst = f.create_dataset('ones', shape=(4096,), dtype='int32', compression='gzip')
+    >>> zipped_dst = f.create_dataset('ones',
+                                      shape=(4096,), 
+                                      dtype='int32',
+                                      compression='gzip')
     >>> zipped_dst = np.ones(4096)
     >>> f.close()
     >>> g = h5py.File('compressed.hdf5', 'r')
@@ -191,16 +193,23 @@ v>>> f['/stock_prices/DJIA/MMM'] = np.random.random(2048)
 
   In numpy this is called ``shuffling'', and can be achieved via:
   \begin{minted}{python}
-    >>> f.create_dataset('rands', shape=(len(a),), data=a, compression='gzip', shuffle=True)
+    >>> f.create_dataset('rands',
+                         shape=(len(a),),
+                         data=a,
+                         compression='gzip',
+                         shuffle=True)
   \end{minted}
-  In my tests, gzip got a compression ratio of 3.86, and gzip+shuffle got a compression ratio of 5.79.    
+  In my test, gzip got a compression ratio of 3.86, and gzip+shuffle got a compression ratio of 5.79.    
 \end{frame}
 
 \begin{frame}[fragile]
   \frametitle{Checksumming}
   HDF5 has support for the Fletcher 32 checksum, which can be enabled via:
   \begin{minted}{python}
-    >>> f.create_dataset('rands', shape=(len(a),), data=a, fletcher32=True)
+    >>> f.create_dataset('rands',
+                        shape=(len(a),),
+                        data=a,
+                        fletcher32=True)
   \end{minted}
   If we use hexedit to alter this file and load the data, we get:
   \begin{minted}{python}
@@ -253,12 +262,63 @@ v>>> f['/stock_prices/DJIA/MMM'] = np.random.random(2048)
   \frametitle{Fill-values}
   Arrays are filled with zeros by default, which is annoying:
   \begin{minted}{bash}
-    >>> dset = f.create_dataset('waveform', shape=(2048,), dtype=np.float64, fillvalue=np.nan)
+    >>> dset = f.create_dataset('waveform',
+                                shape=(2048,),
+                                dtype=np.float64,
+                                fillvalue=np.nan)
     >>> dset[...]
     array([ nan,  nan,  nan, ...,  nan,  nan,  nan])
   \end{minted}
 \end{frame}
 
+\begin{frame}[fragile]
+\frametitle{Compound Datatypes}
+Sometimes we want to store a C-style struct in a HDF5 dataset; take for example shear velocity, compressional velocity and density from seismology. We don't want to decouple these datasets so we make a struct:
+\begin{minted}{python}
+comp_type = np.dtype([('compressional', 'f8'),
+                      ('shear', 'f8'),
+                      ('density', 'f8')])
+data = np.empty(shape=(num,), dtype=comp_type)
+for i in range(num):
+    data[i] = (compressional[i], shear[i], rho[i])
 
+dataset = np.create_dataset('rock_properties', (num,), comp_type)
+dataset[...] = data
+f.close()
+\end{minted}
+\end{frame}
+
+
+\begin{frame}[fragile]
+\frametitle{Compound Datatypes}
+Some calculations only query compressional velocity, so we want to extract just that:
+\begin{minted}{python}
+>>> f = h5py.File('velocity.h5', 'r')
+>>> g = f['rock_properties']
+>>> p = g['compressional']
+>>> p
+array([ 3000.,  3000.,  3000., ...,  3000.,  3000.,  3000.])
+\end{minted}
+Putting part of a struct into a contiguous section of RAM this easily is huge.
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Extensibility of Compound Datatypes}
+Client code won't fail if I add another property to the compound datatype:
+\begin{minted}{python}
+comp_type = np.dtype([('compressional', 'f8'),
+                      ('shear', 'f8'),
+                      ('density', 'f8'),
+                      ('Q', 'f8')])
+data = np.empty(shape=(num,), dtype=comp_type) 
+dataset = np.create_dataset('rock_properties', (num,), comp_type)
+dataset[...] = data
+\end{minted}
+This doesn't obviate the need for versioning, but it makes it \emph{much easier}.
+\end{frame}
+
+\begin{frame}[fragile]
+
+\end{frame}
 
 \end{document}
