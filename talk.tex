@@ -288,6 +288,60 @@ f.close()
 \end{minted}
 \end{frame}
 
+\begin{frame}[fragile]
+\frametitle{Chunked Storage}
+Imagine that we are doing real-time monitoring; data is continuously appended to a dataset.
+
+We don't know our uptime, so we need to tell HDF5 that our array is of arbitrary size
+\begin{minted}{python}
+>>> dset = f.create_dataset('trace', shape=(0, ), maxshape=(None,), chunks=(15000, ))
+\end{minted}
+The \texttt{maxshape=(None,)} makes the trace-length arbitrary
+
+Why do we need \texttt{chunks=(15000,)} for arbitrary lengthed vectors?
+\end{frame}
+
+
+\begin{frame}[fragile]
+  \frametitle{Chunked Storage}
+  We can only resize chunked datasets:
+  \begin{minted}{python}
+    >>> dset = f.create_dataset('trace', shape=(0,))
+    >>> dset.chunks
+    ...
+    >>> dset.resize((15000,))
+        TypeError: Only chunked datasets can be resized
+  \end{minted}
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Chunked Storage}
+  Pseudo-code for real-time monitoring:
+  \begin{minted}{python}
+    dset = f.create_dataset('trace', shape=(0, ), maxshape=(None,), chunks=(15000,), fillvalue=np.nan)
+    while True:
+        trace_diff = np.random.rand(15000)
+        l = len(dset)
+        dset.resize((l+len(trace_diff),))
+        dset[l:l+len(trace_diff)] = trace_diff
+        time.sleep(60)
+  \end{minted}
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Filter Pipelines}
+  These options can be combined arbitrarily; the sequence of operations to read/write is then called a \emph{filter pipeline}:
+  \begin{minted}{python}
+    dset = f.create_dataset('trace',
+                   shape=(0,),
+                   maxshape=(None,),
+                   chunks=(15000,),
+                   fillvalue=np.nan,
+                   compression='gzip',
+                   shuffle=True,
+                   fletcher32=True)
+  \end{minted}
+\end{frame}
 
 \begin{frame}[fragile]
 \frametitle{Compound Datatypes}
