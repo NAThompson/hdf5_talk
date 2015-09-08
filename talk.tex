@@ -371,8 +371,32 @@ dataset[...] = data
 This doesn't obviate the need for versioning, but it makes it \emph{much easier}.
 \end{frame}
 
-\begin{frame}[fragile]
 
+\begin{frame}[fragile]
+  \frametitle{Filesystem in a File: Hardlinks}
+  You can create hardlinks within an HDF5 file:
+  \begin{minted}{python}
+    >>> import h5py
+    >>> f = h5py.File('hardlink_example.hdf5', 'w')
+    >>> g = f.create_group('x')
+    >>> f['y'] = g
+    >>> f['y'] == f['x']
+    True
+    >>> f.close()
+  \end{minted}
+  Not 100\% convinced of the utility of this . . . but it gets us thinking of HDF5 as a filesystem in a file. We can see links via h5ls:
+  \begin{minted}{bash}
+    $ h5ls -vlr hardlink_example.hdf5
+    Opened ``hardlink_example.hdf5'' with sec2 driver.
+    /                        Group
+    Location:  1:96
+    Links:     1
+    /x                       Group
+    Location:  1:800
+    Links:     2
+    /y                       Group, same as /x
+  \end{minted}
 \end{frame}
+
 
 \end{document}
