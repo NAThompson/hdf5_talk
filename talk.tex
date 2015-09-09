@@ -398,5 +398,11 @@ This doesn't obviate the need for versioning, but it makes it \emph{much easier}
   \end{minted}
 \end{frame}
 
+\begin{frame}
+  \frametitle{Real-time monitoring}
+  HDF5 and h5py now have support for \emph{single-writer, multiple reader parallelism}, but there is some pain associated.
+
+  Only on posix-compliant filesystems is it guaranteed to be race-free. (NFS is not posix-compliant).
+\end{frame}
 
 \end{document}
