@@ -1,4 +1,4 @@
-This talk is essentially an outline of my notes on "Python and HDF5".
+This talk is essentially my notes on "Python and HDF5", by Andrew Collette
 
 To simply run the code,
 
