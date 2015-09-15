@@ -22,7 +22,9 @@ urlcolor=blue
 $ git clone https://github.com/NAThompson/h5py_talk.git
 $ cd h5py_talk
 $ sudo /bin/bash
-$ docker run -it -v `pwd`:/hdf5_talk /bin/bash
+$ docker build -t nathompson7/hdf5_talk .  
+$ docker run -it -v `pwd`:/hdf5_talk nathompson7/hdf5_talk /bin/bash
+root@740f0394322d:/data#
 \end{minted}
 \end{frame}
 
@@ -61,6 +63,24 @@ $ docker run -it -v `pwd`:/hdf5_talk /bin/bash
   \item Fortran, C, C++, Java, Python, Octave, Matlab, IDL, LabView
   \end{itemize}
 \end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{When do I use HDF5 and when do I use a database?}
+  \begin{itemize}
+  \item Large, homogeneous datasets (stock prices, waveforms) use hdf5
+  \item If you need to do JOINs, use a database
+  \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Standards Built on Top of HDF5}
+  Once you agree on a set of groups and attributes, you can create standards on top of HDF5:
+  \begin{itemize}
+  \item NetCDF (for climatology, meteorology, GIS)
+  \item PH5 (seismology)
+  \end{itemize}
+\end{frame}
+
 
 
 \begin{frame}[fragile]
@@ -121,6 +141,7 @@ v>>> f['/stock_prices/DJIA/MMM'] = np.random.random(2048)
   Use a callback to get more details:
   \begin{minted}{python}
     >>> def print_attrs(name, obj):
+    >>>     print(list(obj))
     >>>     print(name)
     >>>
     >>> f.visititems(print_attrs)
@@ -130,15 +151,6 @@ v>>> f['/stock_prices/DJIA/MMM'] = np.random.random(2048)
     >>>
     >>> f.visit(p)
   \end{minted}
-\end{frame}
-
-\begin{frame}[fragile]
-  \frametitle{Standards Built on Top of HDF5}
-  Once you agree on a set of groups and attributes, you can create standards on top of HDF5:
-  \begin{itemize}
-  \item NetCDF (for climatology, meteorology, GIS)
-  \item PH5 (seismology)
-  \end{itemize}
 \end{frame}
 
 \begin{frame}[fragile]
@@ -272,23 +284,6 @@ v>>> f['/stock_prices/DJIA/MMM'] = np.random.random(2048)
 \end{frame}
 
 \begin{frame}[fragile]
-\frametitle{Compound Datatypes}
-Sometimes we want to store a C-style struct in a HDF5 dataset; take for example shear velocity, compressional velocity and density from seismology. We don't want to decouple these datasets so we make a struct:
-\begin{minted}{python}
-comp_type = np.dtype([('compressional', 'f8'),
-                      ('shear', 'f8'),
-                      ('density', 'f8')])
-data = np.empty(shape=(num,), dtype=comp_type)
-for i in range(num):
-    data[i] = (compressional[i], shear[i], rho[i])
-
-dataset = np.create_dataset('rock_properties', (num,), comp_type)
-dataset[...] = data
-f.close()
-\end{minted}
-\end{frame}
-
-\begin{frame}[fragile]
 \frametitle{Chunked Storage}
 Imagine that we are doing real-time monitoring; data is continuously appended to a dataset.
 
@@ -318,7 +313,11 @@ Why do we need \texttt{chunks=(15000,)} for arbitrary lengthed vectors?
   \frametitle{Chunked Storage}
   Pseudo-code for real-time monitoring:
   \begin{minted}{python}
-    dset = f.create_dataset('trace', shape=(0, ), maxshape=(None,), chunks=(15000,), fillvalue=np.nan)
+    dset = f.create_dataset('trace',
+                  shape=(0, ),
+                  maxshape=(None,),
+                  chunks=(15000,),
+                  fillvalue=np.nan)
     while True:
         trace_diff = np.random.rand(15000)
         l = len(dset)
@@ -327,6 +326,7 @@ Why do we need \texttt{chunks=(15000,)} for arbitrary lengthed vectors?
         time.sleep(60)
   \end{minted}
 \end{frame}
+
 
 \begin{frame}[fragile]
   \frametitle{Filter Pipelines}
@@ -342,6 +342,39 @@ Why do we need \texttt{chunks=(15000,)} for arbitrary lengthed vectors?
                    fletcher32=True)
   \end{minted}
 \end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Compound Datatypes}
+Sometimes we want to store a C-style struct in a HDF5 dataset; take for example shear velocity, compressional velocity and density from seismology. We don't want to decouple these datasets so we make a struct:
+\begin{minted}{python}
+comp_type = np.dtype([('compressional', 'f8'),
+                      ('shear', 'f8'),
+                      ('density', 'f8')])
+data = np.empty(shape=(num,), dtype=comp_type)
+for i in range(num):
+    data[i] = (compressional[i], shear[i], rho[i])
+
+dataset = np.create_dataset('rock_properties', (num,), comp_type)
+dataset[...] = data
+f.close()
+\end{minted}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Real-time monitoring}
+  HDF5 and h5py now have support for \emph{single-writer, multiple reader parallelism}, but there is some pain associated.
+
+  You must use an experimental version of HDF5, and only on posix-compliant filesystems is it guaranteed to be race-free. (NFS is not posix-compliant).
+  \begin{minted}{bash}
+  $ cd v19
+  $ docker build -t hdf5v19 .
+  $ docker run -it -v `pwd`:/data hdf5v19 /bin/bash
+  # cd data
+  # ./writer.py &
+  # ./reader.py &
+  \end{minted}	
+\end{frame}
+
 
 \begin{frame}[fragile]
 \frametitle{Compound Datatypes}
@@ -396,13 +429,6 @@ This doesn't obviate the need for versioning, but it makes it \emph{much easier}
     Links:     2
     /y                       Group, same as /x
   \end{minted}
-\end{frame}
-
-\begin{frame}
-  \frametitle{Real-time monitoring}
-  HDF5 and h5py now have support for \emph{single-writer, multiple reader parallelism}, but there is some pain associated.
-
-  Only on posix-compliant filesystems is it guaranteed to be race-free. (NFS is not posix-compliant).
 \end{frame}
 
 \end{document}
